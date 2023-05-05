@@ -1,6 +1,8 @@
 package nexodus
 
 import (
+	"runtime"
+
 	"github.com/nexodus-io/nexodus/internal/api/public"
 )
 
@@ -22,7 +24,13 @@ func (ax *Nexodus) DeployWireguardConfig(newPeers []public.ModelsDevice, firstTi
 		}
 	}
 
-	// add routes and tunnels for all peer candidates without checking cache since it has not been built yet
+	if ax.securityGroup.Id != "" && runtime.GOOS == Linux.String() {
+		ax.logger.Debugf("Security group: %+v", ax.securityGroup)
+		if err := ax.processSecurityGroupRules(); err != nil {
+			return err
+		}
+	}
+
 	if firstTime {
 		for _, peer := range cfg.Peers {
 			ax.handlePeerRoute(peer)

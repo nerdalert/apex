@@ -105,6 +105,7 @@ type Nexodus struct {
 	endpointLocalAddress     string
 	nodeReflexiveAddressIPv4 netip.AddrPort
 	hostname                 string
+	securityGroup            *public.ModelsSecurityGroup
 	symmetricNat             bool
 	ipv6Supported            bool
 	os                       string
@@ -349,6 +350,19 @@ func (ax *Nexodus) Start(ctx context.Context, wg *sync.WaitGroup) error {
 	}
 	ax.logger.Infof("Device belongs in organization: %s (%s)", organizations[0].Name, organizations[0].Id)
 	ax.organization = organizations[0].Id
+
+	ax.securityGroup, resp, err = ax.client.SecurityGroupApi.GetSecurityGroup(ctx, organizations[0].Id, organizations[0].SecurityGroupIds).Execute()
+	if err != nil {
+		if resp != nil {
+			ax.logger.Warnf("get security group error - retrying error: %v header: %+v", err, resp.Header)
+			return err
+		}
+		if err != nil {
+			ax.logger.Warnf("get security group error - retrying error: %v", err)
+			return err
+		}
+	}
+	ax.logger.Debugf("organization security group: %v", ax.securityGroup)
 
 	informerCtx, informerCancel := context.WithCancel(ctx)
 	ax.informerStop = informerCancel
@@ -608,6 +622,9 @@ func (ax *Nexodus) Reconcile(firstTime bool) error {
 		ax.buildPeersConfig()
 		if err := ax.DeployWireguardConfig(newPeers, firstTime); err != nil {
 			if errors.Is(err, interfaceErr) {
+				ax.logger.Fatal(err)
+			}
+			if strings.Contains(err.Error(), securityGroupErr.Error()) {
 				ax.logger.Fatal(err)
 			}
 			return err

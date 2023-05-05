@@ -3,7 +3,6 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"gorm.io/gorm/clause"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -13,14 +12,16 @@ import (
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 var (
-	errUserOrOrgNotFound  = errors.New("user or organization not found")
-	errOrgNotFound        = errors.New("organization not found")
-	errUserNotFound       = errors.New("user not found")
-	errDeviceNotFound     = errors.New("device not found")
-	errInvitationNotFound = errors.New("invitation not found")
+	errUserOrOrgNotFound     = errors.New("user or organization not found")
+	errOrgNotFound           = errors.New("organization not found")
+	errUserNotFound          = errors.New("user not found")
+	errDeviceNotFound        = errors.New("device not found")
+	errInvitationNotFound    = errors.New("invitation not found")
+	errSecurityGroupNotFound = errors.New("security group not found")
 )
 
 type errDuplicateDevice struct {
@@ -343,6 +344,7 @@ func (api *API) CreateDevice(c *gin.Context) {
 			SymmetricNat:             request.SymmetricNat,
 			Hostname:                 request.Hostname,
 			Os:                       request.Os,
+			SecurityGroupIds:         org.SecurityGroupIds,
 		}
 
 		if res := tx.

@@ -17,7 +17,10 @@ const (
 	nftablesBinary = "nft"
 )
 
-var interfaceErr = errors.New("interface setup error")
+var (
+	interfaceErr     = errors.New("interface setup error")
+	securityGroupErr = errors.New("nftables setup error")
+)
 
 // ifaceExists returns true if the input matches a net interface
 func ifaceExists(logger *zap.SugaredLogger, iface string) bool {
